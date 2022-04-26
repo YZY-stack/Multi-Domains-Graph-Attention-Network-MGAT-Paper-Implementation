@@ -165,8 +165,9 @@ def main(args):
       log.info(f"[epoch {epoch+1}] train_accuracy: {round(train_acc, 3)}, train_mean_loss: {round(train_loss, 3)}, lr: {round(optimizer.param_groups[0]['lr'], 7)}")
 
       scheduler.step()
-      if args.use_ema:
+      if args.use_ema and epoch > 4:
          # Update the moving average with the new parameters from the last optimizer step
+         log.info(f"Use ema for params update, epoch: {epoch+1}")
          ema.update()
 
       val_loss, val_acc = evaluate(model=net,

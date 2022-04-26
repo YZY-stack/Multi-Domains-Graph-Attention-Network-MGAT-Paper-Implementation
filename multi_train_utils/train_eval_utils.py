@@ -28,7 +28,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
 
         # 在进程0中打印平均loss
         if is_main_process():
-            data_loader.desc = "[epoch {}] mean loss {}".format(epoch, round(mean_loss.item(), 3))
+            data_loader.desc = "[epoch {}] mean loss {}".format(epoch+1, round(mean_loss.item(), 3))
 
         if not torch.isfinite(loss):
             print('WARNING: non-finite loss, ending training ', loss)
