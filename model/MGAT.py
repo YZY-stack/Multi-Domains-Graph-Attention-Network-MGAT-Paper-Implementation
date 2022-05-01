@@ -1,4 +1,5 @@
 #-*- coding: utf-8 -*-
+from unicodedata import bidirectional
 from model.xception import Xception
 import math
 import numpy as np
@@ -96,9 +97,10 @@ class RNNDecoder(nn.Module):
     super(RNNDecoder, self).__init__()
     self.LSTM = nn.LSTM(
         input_size=in_f,
-        hidden_size=512,
+        hidden_size=512,  # 256 if bidirectional is True
         num_layers=3,
-        batch_first=True
+        batch_first=True,
+        bidirectional=False,
     )
 
     self.r = nn.ReLU()
@@ -120,7 +122,7 @@ class RNNDecoder(nn.Module):
     return attn_out.squeeze() 
 
   def forward(self, x):
-    self.LSTM.flatten_parameters()  # LSTM flatten ?
+    self.LSTM.flatten_parameters()
     x, (hn,hc) = self.LSTM(x) # x.shape -> bs,clip,512
     x_last = x[:,-1,:] # x[:,-1,:].shape [8, 512]
 
@@ -148,6 +150,10 @@ class Head(torch.nn.Module):
 
 
 class MGAT(nn.Module):
+    '''
+    This code is the implementation code for MGAT paper
+    Author: yanzhiyuan1114@gmail.com
+    '''
     def __init__(self, num_class, height=320, width=320):
         super(MGAT, self).__init__()
         self.num_class = num_class
