@@ -9,8 +9,6 @@ from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, MultiStepLR, S
 from torch.utils.tensorboard import SummaryWriter
 from early_stop import EarlyStopping
 
-from dataset import Deepfakes
-# from video_dataset import Deepfakes
 from utils import *  # including other libraries like torch, tqdm, etc.
 from logger import prepare_logger
 from torch_ema import ExponentialMovingAverage
@@ -66,6 +64,12 @@ def choose_model(model_name: str, num_classes: int):
    elif model_name == 'efficient_vit':
       from model.efficientnet_vit import EfficientViT
       net = EfficientViT(image_size=224, num_classes=2)
+   elif model_name == 'lrcn':
+      from model.LRCN import LRCN
+      net = LRCN(512, 2)
+   elif model_name == 'mgat':
+      from model.MGAT import MGAT
+      net = MGAT(num_class=num_classes)
    else:
       raise ValueError("model name error! plz try again.")
    return net
@@ -95,13 +99,24 @@ def main(args):
    log.info(args)
    log.info(f"Now, start training {name} dataset")
 
+   # get dataset according to the type of model (cnn or rnn type)
+   if args.temporal:
+      ## temporal-based model
+      from video_dataset import Deepfakes
+   ## spatial-based model or frequency-based model
+   else:
+      from dataset import Deepfakes
    train_dataset = Deepfakes(dataset_root=args.data_path, dataset_name=name, size=args.img_size,
                            frame_num=args.frame_num, mode='train', dataAug=args.aug)
    val_dataset = Deepfakes(dataset_root=args.data_path, dataset_name=name, size=args.img_size,
                            frame_num=args.frame_num, mode='val', dataAug=False)
 
-   log.info(f"Train Data: {len(train_dataset)}")
-   log.info(f"Validation Data: {len(val_dataset)}")
+   if args.temporal:
+      log.info(f"Train Data: {len(train_dataset) * args.frame_num}")
+      log.info(f"Validation Data: {len(val_dataset) * args.frame_num}")
+   else:
+      log.info(f"Train Data: {len(train_dataset)}")
+      log.info(f"Validation Data: {len(val_dataset)}")
 
    log.info('Using {} dataloader workers every process'.format(args.num_workers))
 
@@ -148,6 +163,7 @@ def main(args):
 
    # loss_function
    loss_function = torch.nn.CrossEntropyLoss()
+   # loss_function = LabelSmoothingCrossEntropy()
 
    # initialize the early_stopping object
    early_stopping = EarlyStopping(patience=10)
@@ -227,24 +243,25 @@ if __name__ == '__main__':
    parser = argparse.ArgumentParser()
    # hyper-params
    parser.add_argument('--epoch', type=int, default=30)
-   parser.add_argument('--batch_size', type=int, default=32)
-   parser.add_argument('--lr', type=float, default=0.00008)
+   parser.add_argument('--batch_size', type=int, default=8)
+   parser.add_argument('--lr', type=float, default=0.0002)
    parser.add_argument('--aug', type=bool, default=True)
    parser.add_argument('--num_classes', type=int, default=2)
    parser.add_argument('--num_workers', type=int, default=4)
    parser.add_argument('--save_foler', type=str, default='weights')
-   parser.add_argument('--model_name', type=str, default='cipucnet')
-   parser.add_argument('--dataset_name', type=str, default='NeuralTextures')
+   parser.add_argument('--model_name', type=str, default='mgat')
+   parser.add_argument('--dataset_name', type=str, default='Deepfakes')
    parser.add_argument('--use_ema', type=bool, default=False)
    parser.add_argument('--lr_decay', type=str, default='step')  # warmup or multi or step
+   parser.add_argument('--temporal', type=bool, default=True)
    parser.add_argument('--weight_decay', type=float, default=3e-3)
-   parser.add_argument('--frame_num', type=int, default=32)
+   parser.add_argument('--frame_num', type=int, default=8)
    parser.add_argument('--img_size', type=int, default=320)
-   parser.add_argument('--data_path', type=str, default='../FF_data/FF_HQ/train_face')
+   parser.add_argument('--data_path', type=str, default='../FF_data/FF_LQ/train_face')
    # gpu-params
    parser.add_argument('--device', default='cuda', help='device id (i.e. 0 or 0,1 or cpu)')
    opt = parser.parse_args()
 
    # run
    main(opt)
-   # os.system("shutdown")
+   os.system("shutdown")
