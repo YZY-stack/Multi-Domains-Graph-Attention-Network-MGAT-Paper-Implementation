@@ -109,17 +109,15 @@ class RNNDecoder(nn.Module):
 
   def attn(self, lstm_output, h_t):
     '''add attention at the end of the lstm'''
-    h_t = h_t.unsqueeze(0)
-    h_t = h_t.permute(1, 2, 0)
-    lstm_output = lstm_output.permute(1, 0, 2)
-
+    # lstm_output [bs, clips, hiden]  h_t[bs, hiden]
+    h_t = h_t.unsqueeze(2)
+    # --> attn [bs, clips, 1]
     attn_weights = torch.bmm(lstm_output, h_t)
-    attn_weights = attn_weights.permute(1, 0, 2).squeeze()
+    attention = F.softmax(attn_weights.squeeze())
+    # bmm : [bs, hidden, clips] [bs, clips, 1]
+    attn_out = torch.bmm(lstm_output.transpose(1, 2), attention.unsqueeze(2)) # [bs, hidden, 1]
 
-    attention = F.softmax(attn_weights, 1)
-    attn_out = torch.bmm(lstm_output.transpose(1, 2), attention.unsqueeze(-1).transpose(1,0)) # [8, 512, 1]
-
-    return attn_out.squeeze() 
+    return attn_out.squeeze()  # [bs, hidden]
 
   def forward(self, x):
     self.LSTM.flatten_parameters()

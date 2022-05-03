@@ -257,11 +257,11 @@ if __name__ == '__main__':
    parser.add_argument('--weight_decay', type=float, default=3e-3)
    parser.add_argument('--frame_num', type=int, default=8)
    parser.add_argument('--img_size', type=int, default=320)
-   parser.add_argument('--data_path', type=str, default='../FF_data/FF_LQ/train_face')
+   parser.add_argument('--data_path', type=str, default='../FF_data/FF_HQ/train_face')
    # gpu-params
    parser.add_argument('--device', default='cuda', help='device id (i.e. 0 or 0,1 or cpu)')
    opt = parser.parse_args()
 
    # run
    main(opt)
-   os.system("shutdown")
+   # os.system("shutdown")

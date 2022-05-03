@@ -26,9 +26,9 @@ def get_aug(img_arr):
             A.CLAHE(clip_limit=4.0, tile_grid_size=(4, 4), p=0.9),
             A.GaussianBlur(),
         ]),
+        # A.ImageCompression(quality_lower=60, quality_upper=100, p=0.5),
+        # A.Downscale(scale_min=0.7, scale_max=0.9, interpolation=cv2.INTER_LINEAR, p=0.3),
         # A.HorizontalFlip(p=0.5),
-        # A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=20,
-        #                    interpolation=cv2.INTER_LINEAR, border_mode=cv2.BORDER_CONSTANT, p=1),
         # A.OneOf([
         #     A.CoarseDropout(),
         #     A.GridDistortion(),
@@ -66,7 +66,7 @@ class Deepfakes(Dataset):
         return image
 
     def collect_video(self, root):
-        all_videos_list = [], []
+        all_videos_list = []
         # e.g. ffdataset, Deepfakes, fake, video_0
         if self.mode == 'train':
             if ',' not in self.dataset_name:  # train one dataset
@@ -76,7 +76,7 @@ class Deepfakes(Dataset):
                 for dl in dataset_list:
                     all_videos_list.extend(glob.glob(os.path.join(root, 'train', dl, 'fake', '*')))
                 # real video
-                all_videos_list.extend(glob.glob(os.path.join(root, 'train', dl, 'real', '*')))
+                all_videos_list.extend(glob.glob(os.path.join(root, 'train', dl, 'real', '*')) * 4)
         elif self.mode == 'val':
             if ',' not in self.dataset_name:
                 all_videos_list = glob.glob(os.path.join(root, 'val', self.dataset_name, '*', '*'))
